@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NeuralAttend — Smart Face Recognition System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #060810;
+    --surface: #0d1117;
+    --surface2: #131924;
+    --surface3: #1a2235;
+    --border: rgba(99,179,237,0.12);
+    --border2: rgba(99,179,237,0.22);
+    --accent: #4facfe;
+    --accent2: #00f2fe;
+    --green: #39ff85;
+    --orange: #ffa94d;
+    --red: #ff5f6d;
+    --purple: #b48aff;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --glow: rgba(79,172,254,0.15);
+    --glow2: rgba(0,242,254,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  /* ── Grid Background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(79,172,254,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,172,254,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Layout ── */
+  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.3px;
+  }
+  .logo-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px; color: var(--text3);
+    margin-top: 2px; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px; color: var(--text3);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 12px 8px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; transition: all 0.2s;
+    font-size: 14px; font-weight: 500;
+    color: var(--text2);
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(79,172,254,0.15), rgba(0,242,254,0.08));
+    color: var(--accent);
+    border-color: var(--border2);
+  }
+  .nav-item .icon { font-size: 18px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .sidebar-status {
+    padding: 16px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .status-text { font-size: 12px; color: var(--text3); font-family: 'Space Mono', monospace; }
+
+  /* ── Main Content ── */
+  .main { margin-left: 240px; flex: 1; padding: 0; }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(6,8,16,0.85); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--text);
+  }
+  .page-subtitle { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+  .content { padding: 28px 32px; }
+
+  /* ── Pages ── */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ── Stats Grid ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--green), #00ff9d); }
+  .stat-card.orange::before { background: linear-gradient(90deg, var(--orange), #ff8c42); }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), #7b61ff); }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-family: 'Space Mono', monospace; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; margin: 8px 0 4px; }
+  .stat-sub { font-size: 12px; color: var(--text2); }
+  .stat-icon { position: absolute; right: 16px; top: 20px; font-size: 28px; opacity: 0.15; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-body { padding: 20px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 10px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: var(--bg); font-weight: 600;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,172,254,0.3); }
+  .btn-ghost {
+    background: var(--surface2); color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+  .btn-green {
+    background: linear-gradient(135deg, #39ff85, #00ff9d);
+    color: #060810; font-weight: 600;
+  }
+  .btn-green:hover { opacity: 0.9; box-shadow: 0 8px 24px rgba(57,255,133,0.3); }
+  .btn-red {
+    background: rgba(255,95,109,0.15);
+    color: var(--red); border: 1px solid rgba(255,95,109,0.3);
+  }
+  .btn-red:hover { background: rgba(255,95,109,0.25); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+
+  /* ── Form Elements ── */
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 12px; color: var(--text3);
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  input::placeholder { color: var(--text3); }
+
+  /* ── Camera Area ── */
+  .camera-container {
+    position: relative; overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+    aspect-ratio: 16/9;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+  }
+  .camera-container video,
+  .camera-container img.preview {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  .camera-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  .camera-corners::before, .camera-corners::after,
+  .camera-corner-br::before, .camera-corner-br::after {
+    content: '';
+    position: absolute;
+    width: 24px; height: 24px;
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .camera-corners::before { top: 16px; left: 16px; border-width: 2px 0 0 2px; }
+  .camera-corners::after  { top: 16px; right: 16px; border-width: 2px 2px 0 0; }
+  .camera-corner-br::before { bottom: 16px; left: 16px; border-width: 0 0 2px 2px; }
+  .camera-corner-br::after  { bottom: 16px; right: 16px; border-width: 0 2px 2px 0; }
+
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scan 3s infinite linear;
+  }
+  @keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  .camera-placeholder {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    color: var(--text3);
+  }
+  .camera-placeholder .icon-big { font-size: 48px; opacity: 0.3; }
+  .camera-placeholder p { font-size: 13px; }
+
+  /* ── Progress Bar ── */
+  .progress-wrap { margin-top: 12px; }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--text2); margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+  .progress-bar {
+    height: 6px; background: var(--surface3); border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.3s ease;
+  }
+
+  /* ── Detection Result ── */
+  .detection-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 99px;
+    font-family: 'Space Mono', monospace; font-size: 13px;
+  }
+  .detection-badge.found {
+    background: rgba(57,255,133,0.12);
+    color: var(--green); border: 1px solid rgba(57,255,133,0.3);
+  }
+  .detection-badge.not-found {
+    background: rgba(255,95,109,0.12);
+    color: var(--red); border: 1px solid rgba(255,95,109,0.3);
+  }
+  .detection-badge.warning {
+    background: rgba(255,169,77,0.12);
+    color: var(--orange); border: 1px solid rgba(255,169,77,0.3);
+  }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th {
+    padding: 10px 14px; text-align: left;
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1px;
+    font-weight: 400;
+  }
+  td { padding: 12px 14px; border-bottom: 1px solid rgba(99,179,237,0.06); color: var(--text2); }
+  tbody tr:hover td { background: rgba(79,172,254,0.04); color: var(--text); }
+  tbody tr:last-child td { border-bottom: none; }
+  .pill {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 99px; font-size: 11px;
+    font-family: 'Space Mono', monospace;
+  }
+  .pill-green { background: rgba(57,255,133,0.12); color: var(--green); }
+  .pill-red { background: rgba(255,95,109,0.12); color: var(--red); }
+  .pill-blue { background: rgba(79,172,254,0.12); color: var(--accent); }
+
+  /* ── Alert ── */
+  .alert {
+    padding: 12px 16px; border-radius: 10px; font-size: 13px;
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px;
+  }
+  .alert-success { background: rgba(57,255,133,0.1); border: 1px solid rgba(57,255,133,0.2); color: var(--green); }
+  .alert-error { background: rgba(255,95,109,0.1); border: 1px solid rgba(255,95,109,0.2); color: var(--red); }
+  .alert-info { background: rgba(79,172,254,0.1); border: 1px solid rgba(79,172,254,0.2); color: var(--accent); }
+  .alert-warning { background: rgba(255,169,77,0.1); border: 1px solid rgba(255,169,77,0.2); color: var(--orange); }
+  .alert.hidden { display: none; }
+
+  /* ── Student Cards Grid ── */
+  .students-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .student-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; text-align: center;
+    transition: all 0.2s; position: relative;
+  }
+  .student-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .student-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800;
+    color: white; overflow: hidden;
+  }
+  .student-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .student-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+  .student-meta { font-size: 12px; color: var(--text3); margin-top: 4px; font-family: 'Space Mono', monospace; }
+  .student-tags { display: flex; justify-content: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .student-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: center; }
+
+  /* ── Two col layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .two-col-lg { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+
+  /* ── Enrollment Steps ── */
+  .steps { display: flex; gap: 0; margin-bottom: 24px; }
+  .step {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative;
+  }
+  .step:not(:last-child)::after {
+    content: ''; position: absolute;
+    top: 15px; left: 60%; right: 0;
+    height: 2px; background: var(--surface3);
+  }
+  .step.done:not(:last-child)::after { background: var(--accent); }
+  .step-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--surface3); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--text3);
+    transition: all 0.3s; z-index: 1;
+  }
+  .step.active .step-dot { background: var(--accent); border-color: var(--accent); color: var(--bg); box-shadow: 0 0 16px rgba(79,172,254,0.5); }
+  .step.done .step-dot { background: var(--green); border-color: var(--green); color: var(--bg); }
+  .step-label { font-size: 11px; color: var(--text3); margin-top: 6px; text-align: center; font-family: 'Space Mono', monospace; }
+  .step.active .step-label { color: var(--accent); }
+  .step.done .step-label { color: var(--green); }
+
+  /* Detection Controls */
+  .detect-result-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .detect-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--surface3); border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .detect-item-name { font-weight: 600; font-family: 'Syne', sans-serif; }
+  .detect-item-conf { font-family: 'Space Mono', monospace; font-size: 12px; }
+  .conf-high { color: var(--green); }
+  .conf-med { color: var(--orange); }
+  .conf-low { color: var(--red); }
+
+  /* Attendance date picker row */
+  .date-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .date-row input[type="date"] { width: auto; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+  /* Mobile (very basic) */
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; }
+    .sidebar-logo { padding: 16px 10px; }
+    .logo-text, .logo-sub, .nav-label, .nav-item span:not(.icon), .status-text { display: none; }
+    .main { margin-left: 60px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col, .two-col-lg { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px; }
+    .topbar { padding: 0 16px; }
+  }
+
+  .loading-spinner {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid rgba(79,172,254,0.2);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 60px 20px;
+    color: var(--text3); text-align: center;
+    gap: 12px;
+  }
+  .empty-state .icon { font-size: 48px; opacity: 0.3; }
+  .empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🧠</div>
+        <div>
+          <div class="logo-text">NeuralAttend</div>
+          <div class="logo-sub">v2.0 · production</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <span class="icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="nav-label">Systems</div>
+      <div class="nav-item" onclick="navigate('enroll')">
+        <span class="icon">👤</span><span>Enroll Student</span>
+      </div>
+      <div class="nav-item" onclick="navigate('detect')">
+        <span class="icon">🔍</span><span>Take Attendance</span>
+      </div>
+      <div class="nav-label">Records</div>
+      <div class="nav-item" onclick="navigate('students')">
+        <span class="icon">🗂️</span><span>Students</span>
+        <span class="nav-badge" id="student-count-badge">0</span>
+      </div>
+      <div class="nav-item" onclick="navigate('attendance')">
+        <span class="icon">📋</span><span>Attendance Log</span>
+      </div>
+    </nav>
+    <div class="sidebar-status">
+      <div class="status-dot" id="api-dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></div>
+      <span class="status-text" id="api-status">connecting...</span>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="page-subtitle" id="page-subtitle">System overview & quick stats</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
+        <div id="current-time" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--text3)"></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ──── DASHBOARD ──── -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-label">Total Students</div>
+            <div class="stat-value" id="stat-students">—</div>
+            <div class="stat-sub">enrolled in system</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-label">Present Today</div>
+            <div class="stat-value" id="stat-present">—</div>
+            <div class="stat-sub">marked today</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon">❌</div>
+            <div class="stat-label">Absent Today</div>
+            <div class="stat-value" id="stat-absent">—</div>
+            <div class="stat-sub">not yet seen</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">📅</div>
+            <div class="stat-label">Total Sessions</div>
+            <div class="stat-value" id="stat-sessions">—</div>
+            <div class="stat-sub">attendance sessions</div>
+          </div>
+        </div>
+
+        <div class="two-col-lg">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🕐 Today's Attendance</div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('attendance')">View All</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Name</th><th>Time</th><th>Confidence</th><th>Status</th></tr>
+                </thead>
+                <tbody id="dashboard-attendance-table">
+                  <tr><td colspan="4"><div class="empty-state"><span class="icon">📭</span><p>No attendance today</p></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⚡ Quick Actions</div>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+              <button class="btn btn-primary" style="justify-content:center" onclick="navigate('enroll')">
+                ➕ Enroll New Student
+              </button>
+              <button class="btn btn-green" style="justify-content:center" onclick="navigate('detect')">
+                📷 Take Attendance Now
+              </button>
+              <button class="btn btn-ghost" style="justify-content:center" onclick="navigate('students')">
+                🗂️ View All Students
+              </button>
+              <hr style="border:none;border-top:1px solid var(--border)" />
+              <div style="font-size:12px;color:var(--text3);font-family:'Space Mono',monospace">
+                <div>🟢 System: Online</div>
+                <div style="margin-top:4px">📅 Date: <span id="dash-date">—</span></div>
+                <div style="margin-top:4px">🧠 Model: KNN (k=5)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──── ENROLL ──── -->
+      <div class="page" id="page-enroll">
+        <!-- Steps -->
+        <div class="steps" id="enroll-steps">
+          <div class="step active" id="step-1"><div class="step-dot">1</div><div class="step-label">Details</div></div>
+          <div class="step" id="step-2"><div class="step-dot">2</div><div class="step-label">Capture</div></div>
+          <div class="step" id="step-3"><div class="step-dot">3</div><div class="step-label">Complete</div></div>
+        </div>
+
+        <!-- Step 1: Student Details -->
+        <div id="enroll-step-1">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📋 Student Information</div></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Student ID *</label>
+                  <input type="text" id="e-student-id" placeholder="e.g. STU2024001" />
+                </div>
+                <div class="form-group">
+                  <label>Full Name *</label>
+                  <input type="text" id="e-name" placeholder="e.g. Arjun Sharma" />
+                </div>
+                <div class="form-group">
+                  <label>Roll Number</label>
+                  <input type="text" id="e-roll" placeholder="e.g. 24CS001" />
+                </div>
+                <div class="form-group">
+                  <label>Class / Section</label>
+                  <input type="text" id="e-class" placeholder="e.g. B.Tech CS - A" />
+                </div>
+                <div class="form-group full">
+                  <label>Email</label>
+                  <input type="email" id="e-email" placeholder="student@college.edu" />
+                </div>
+              </div>
+              <div id="enroll-alert-1"></div>
+              <div style="margin-top:20px">
+                <button class="btn btn-primary" onclick="startEnrollment()">
+                  Continue to Face Capture →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Face Capture -->
+        <div id="enroll-step-2" style="display:none">
+          <div class="two-col">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📸 Face Capture</div>
+                <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text3)" id="e-sample-counter">0 / 10</span>
+              </div>
+              <div class="card-body">
+                <div class="camera-container" id="e-camera-box">
+                  <video id="e-video" autoplay playsinline muted></video>
+                  <div class="camera-overlay camera-corners camera-corner-br">
+                    <div class="scan-line"></div>
+                  </div>
+                </div>
+                <div class="progress-wrap">
+                  <div class="progress-info">
+                    <span>Samples captured</span>
+                    <span id="e-progress-text">0 / 10</span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-fill" id="e-progress-fill" style="width:0%"></div></div>
+                </div>
+                <div id="enroll-alert-2" style="margin-top:12px"></div>
+                <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+                  <button class="btn btn-primary" id="e-capture-btn" onclick="captureEnrollFrame()">
+                    📸 Capture Sample
+                  </button>
+                  <button class="btn btn-ghost" onclick="e_captureContinuous()" id="e-auto-btn">
+                    ▶ Auto Capture
+                  </button>
+                  <button class="btn btn-ghost btn-sm" onclick="resetEnrollment()">✕ Cancel</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">📝 Enrollment Tips</div></div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="font-size:20px">💡</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px">Good Lighting</div>
+                    <div style="font-size:13px;color:var(--text2);margin-top:3px">Ensure your face is well-lit from the front. Avoid strong backlight.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="font-size:20px">👤</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px">Center Your Face</div>
+                    <div style="font-size:13px;color:var(--text2);margin-top:3px">Keep your face centered in the frame and look directly at the camera.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="font-size:20px">🔄</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px">Slight Variations</div>
+                    <div style="font-size:13px;color:var(--text2);margin-top:3px">Slightly turn your head left/right for better recognition accuracy.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="font-size:20px">😊</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px">Natural Expression</div>
+                    <div style="font-size:13px;color:var(--text2);margin-top:3px">Keep a natural expression. Avoid extreme facial expressions.</div>
+                  </div>
+                </div>
+                <div id="e-last-capture" style="margin-top:8px;display:none">
+                  <div style="font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:6px">LAST CAPTURED</div>
+                  <img id="e-last-img" style="width:100%;border-radius:10px;border:1px solid var(--border)" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-green" id="e-complete-btn" onclick="completeEnrollment()" disabled>
+              ✅ Complete Enrollment
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="enroll-step-3" style="display:none">
+          <div class="card">
+            <div class="card-body" style="text-align:center;padding:60px 40px">
+              <div style="font-size:64px;margin-bottom:16px">🎉</div>
+              <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--green)" id="e-success-name">Student Enrolled!</div>
+              <div style="color:var(--text2);margin-top:8px;font-size:15px" id="e-success-msg">Face data saved successfully.</div>
+              <div style="display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap">
+                <button class="btn btn-primary" onclick="resetEnrollment()">➕ Enroll Another</button>
+                <button class="btn btn-ghost" onclick="navigate('students')">🗂️ View Students</button>
+                <button class="btn btn-green" onclick="navigate('detect')">📷 Take Attendance</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──── DETECT ──── -->
+      <div class="page" id="page-detect">
+        <div class="two-col-lg">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📷 Live Detection</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost btn-sm" id="d-cam-btn" onclick="toggleDetectCamera()">Start Camera</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="camera-container" id="d-camera-box">
+                <div class="camera-placeholder">
+                  <div class="icon-big">📷</div>
+                  <p>Click "Start Camera" to begin face detection</p>
+                </div>
+                <video id="d-video" autoplay playsinline muted style="display:none"></video>
+                <img id="d-annotated" style="display:none;width:100%;height:100%;object-fit:cover" />
+                <div class="camera-overlay camera-corners camera-corner-br" id="d-overlay" style="display:none">
+                  <div class="scan-line"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="d-detect-btn" onclick="detectFace()" disabled>
+                  🔍 Detect Face
+                </button>
+                <button class="btn btn-ghost" id="d-auto-btn" onclick="toggleAutoDetect()" disabled>
+                  ▶ Live Detect
+                </button>
+              </div>
+              <div id="detect-alert" style="margin-top:12px"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🧬 Detection Results</div>
+              <button class="btn btn-ghost btn-sm" onclick="clearDetections()">Clear</button>
+            </div>
+            <div class="card-body">
+              <div id="detect-results-empty" class="empty-state" style="padding:40px 20px">
+                <div class="icon">👁️</div>
+                <p>Detection results will appear here</p>
+              </div>
+              <div id="detect-result-list" class="detect-result-list" style="display:none"></div>
+              <div id="mark-attendance-section" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+                <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Mark attendance for detected students?</div>
+                <button class="btn btn-green" onclick="markAttendance()" style="width:100%;justify-content:center">
+                  ✅ Mark Attendance
+                </button>
+                <div id="mark-alert" style="margin-top:10px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──── STUDENTS ──── -->
+      <div class="page" id="page-students">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <input type="text" id="search-students" placeholder="🔍 Search by name, ID, class..." 
+              style="width:280px" oninput="filterStudents()" />
+          </div>
+          <button class="btn btn-primary" onclick="navigate('enroll')">➕ Enroll New</button>
+        </div>
+        <div class="students-grid" id="students-grid">
+          <div class="empty-state"><div class="loading-spinner"></div><p>Loading students...</p></div>
+        </div>
+      </div>
+
+      <!-- ──── ATTENDANCE ──── -->
+      <div class="page" id="page-attendance">
+        <div class="date-row">
+          <input type="date" id="att-date" onchange="loadAttendance()" />
+          <button class="btn btn-ghost btn-sm" onclick="downloadAttendance()">⬇ Download CSV</button>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+          <div class="stat-card green">
+            <div class="stat-label">Present</div>
+            <div class="stat-value" style="font-size:28px" id="att-present">—</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Absent</div>
+            <div class="stat-value" style="font-size:28px" id="att-absent">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" style="font-size:28px" id="att-total">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Attendance Records</div>
+            <span id="att-date-label" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text3)"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Student Name</th><th>Student ID</th><th>Time</th><th>Confidence</th><th>Status</th></tr>
+              </thead>
+              <tbody id="attendance-table">
+                <tr><td colspan="6"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<script>
+const API = 'http://localhost:5000/api';
+let currentPage = 'dashboard';
+let enrollSession = null;
+let enrollStream = null;
+let detectStream = null;
+let autoDetectInterval = null;
+let enrollAutoInterval = null;
+let lastDetections = [];
+let allStudents = [];
+
+// ── Navigation ──────────────────────────────────────────────
+const titles = {
+  dashboard: ['Dashboard', 'System overview & quick stats'],
+  enroll: ['Enroll Student', 'Register a new student with face data'],
+  detect: ['Take Attendance', 'Identify students via face recognition'],
+  students: ['Students', 'View and manage enrolled students'],
+  attendance: ['Attendance Log', 'Review and download attendance records'],
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(page === 'enroll' ? 'enroll' :
+        page === 'detect' ? 'attend' : page === 'dashboard' ? 'dashboard' :
+        page === 'students' ? 'students' : 'log')) n.classList.add('active');
+  });
+  // re-target
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const onclick = n.getAttribute('onclick');
+    if (onclick && onclick.includes(`'${page}'`)) n.classList.add('active');
+  });
+  currentPage = page;
+  document.getElementById('page-title').textContent = titles[page][0];
+  document.getElementById('page-subtitle').textContent = titles[page][1];
+
+  if (page === 'students') loadStudents();
+  if (page === 'attendance') { setTodayDate(); loadAttendance(); }
+  if (page === 'dashboard') loadDashboard();
+  if (page !== 'detect' && detectStream) stopDetectCamera();
+  if (page !== 'enroll' && enrollStream) stopEnrollCamera();
+}
+
+// ── Time ─────────────────────────────────────────────────────
+function updateTime() {
+  const now = new Date();
+  document.getElementById('current-time').textContent = now.toLocaleTimeString();
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// ── API Check ────────────────────────────────────────────────
+async function checkAPI() {
+  try {
+    const r = await fetch(API + '/health');
+    if (r.ok) {
+      document.getElementById('api-dot').style.background = 'var(--green)';
+      document.getElementById('api-dot').style.boxShadow = '0 0 8px var(--green)';
+      document.getElementById('api-status').textContent = 'backend online';
+      return true;
+    }
+  } catch {}
+  document.getElementById('api-dot').style.background = 'var(--red)';
+  document.getElementById('api-dot').style.boxShadow = '0 0 8px var(--red)';
+  document.getElementById('api-status').textContent = 'backend offline';
+  return false;
+}
+checkAPI();
+setInterval(checkAPI, 10000);
+
+// ── Alerts ───────────────────────────────────────────────────
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 5000);
+}
+
+// ── Dashboard ────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [stats, att] = await Promise.all([
+      fetch(API + '/stats').then(r => r.json()),
+      fetch(API + '/attendance').then(r => r.json())
+    ]);
+    document.getElementById('stat-students').textContent = stats.total_students;
+    document.getElementById('stat-present').textContent = stats.today_present;
+    document.getElementById('stat-absent').textContent = stats.today_present !== undefined ? Math.max(0, stats.total_students - stats.today_present) : '—';
+    document.getElementById('stat-sessions').textContent = stats.total_sessions;
+    document.getElementById('student-count-badge').textContent = stats.total_students;
+    document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+
+    const tbody = document.getElementById('dashboard-attendance-table');
+    if (att.records && att.records.length > 0) {
+      tbody.innerHTML = att.records.slice(0,8).map(r => `
+        <tr>
+          <td style="font-weight:600;color:var(--text)">${r.student_name}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:12px">${r.time}</td>
+          <td><span style="font-family:'Space Mono',monospace;font-size:12px;color:${r.confidence>70?'var(--green)':r.confidence>50?'var(--orange)':'var(--red)'}">${r.confidence?r.confidence.toFixed(1)+'%':'—'}</span></td>
+          <td><span class="pill pill-green">Present</span></td>
+        </tr>`).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><span class="icon">📭</span><p>No attendance recorded today</p></div></td></tr>';
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── Enrollment ────────────────────────────────────────────────
+async function startEnrollment() {
+  const sid = document.getElementById('e-student-id').value.trim();
+  const name = document.getElementById('e-name').value.trim();
+  if (!sid || !name) { showAlert('enroll-alert-1','error','Student ID and Name are required.'); return; }
+
+  try {
+    const r = await fetch(API + '/enroll/start', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        student_id: sid, name,
+        roll_number: document.getElementById('e-roll').value,
+        class_name: document.getElementById('e-class').value,
+        email: document.getElementById('e-email').value
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showAlert('enroll-alert-1','error',d.error); return; }
+
+    enrollSession = { session_id: sid, samples: 0 };
+    setEnrollStep(2);
+    startEnrollCamera();
+  } catch(e) {
+    showAlert('enroll-alert-1','error','Backend error. Is the server running?');
+  }
+}
+
+function setEnrollStep(n) {
+  ['enroll-step-1','enroll-step-2','enroll-step-3'].forEach((id,i) => {
+    document.getElementById(id).style.display = i+1===n ? 'block' : 'none';
+  });
+  for (let i=1;i<=3;i++) {
+    const s = document.getElementById('step-'+i);
+    s.classList.remove('active','done');
+    if (i < n) s.classList.add('done');
+    else if (i === n) s.classList.add('active');
+  }
+}
+
+async function startEnrollCamera() {
+  try {
+    enrollStream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    document.getElementById('e-video').srcObject = enrollStream;
+  } catch(e) {
+    showAlert('enroll-alert-2','error','Camera access denied. Please allow camera permissions.');
+  }
+}
+
+function stopEnrollCamera() {
+  clearInterval(enrollAutoInterval);
+  if (enrollStream) { enrollStream.getTracks().forEach(t=>t.stop()); enrollStream = null; }
+}
+
+function captureFrame(videoEl) {
+  const canvas = document.createElement('canvas');
+  canvas.width = videoEl.videoWidth || 640;
+  canvas.height = videoEl.videoHeight || 480;
+  canvas.getContext('2d').drawImage(videoEl, 0, 0);
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+async function captureEnrollFrame() {
+  if (!enrollStream || !enrollSession) return;
+  const imageData = captureFrame(document.getElementById('e-video'));
+  try {
+    const r = await fetch(API + '/enroll/capture', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: enrollSession.session_id, image: imageData})
+    });
+    const d = await r.json();
+    if (d.status === 'captured') {
+      enrollSession.samples = d.samples;
+      updateEnrollProgress(d.samples, 10);
+      if (d.annotated_image) {
+        document.getElementById('e-last-capture').style.display = 'block';
+        document.getElementById('e-last-img').src = d.annotated_image;
+      }
+      if (d.samples >= 5) {
+        document.getElementById('e-complete-btn').disabled = false;
+      }
+      if (d.samples >= 10) {
+        clearInterval(enrollAutoInterval);
+        showAlert('enroll-alert-2','success',`✅ ${d.samples} samples captured. Ready to complete!`);
+      }
+    } else if (d.status === 'no_face') {
+      showAlert('enroll-alert-2','warning','⚠ No face detected. Please center your face.');
+    } else if (d.status === 'multiple_faces') {
+      showAlert('enroll-alert-2','warning','⚠ Multiple faces detected. Only one person should be visible.');
+    }
+  } catch(e) { showAlert('enroll-alert-2','error','Capture failed.'); }
+}
+
+function updateEnrollProgress(samples, total) {
+  const pct = (samples/total)*100;
+  document.getElementById('e-progress-fill').style.width = pct + '%';
+  document.getElementById('e-progress-text').textContent = `${samples} / ${total}`;
+  document.getElementById('e-sample-counter').textContent = `${samples} / ${total}`;
+}
+
+function e_captureContinuous() {
+  if (enrollAutoInterval) {
+    clearInterval(enrollAutoInterval);
+    enrollAutoInterval = null;
+    document.getElementById('e-auto-btn').textContent = '▶ Auto Capture';
+    return;
+  }
+  document.getElementById('e-auto-btn').textContent = '⏸ Stop Auto';
+  enrollAutoInterval = setInterval(() => {
+    if (enrollSession && enrollSession.samples < 10) captureEnrollFrame();
+    else { clearInterval(enrollAutoInterval); enrollAutoInterval = null; document.getElementById('e-auto-btn').textContent = '▶ Auto Capture'; }
+  }, 600);
+}
+
+async function completeEnrollment() {
+  if (!enrollSession) return;
+  const imageData = captureFrame(document.getElementById('e-video'));
+  try {
+    const r = await fetch(API + '/enroll/complete', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: enrollSession.session_id, photo: imageData})
+    });
+    const d = await r.json();
+    if (!r.ok) { showAlert('enroll-alert-2','error',d.error); return; }
+    stopEnrollCamera();
+    document.getElementById('e-success-name').textContent = `${d.message}`;
+    document.getElementById('e-success-msg').textContent = `${d.samples_captured} face samples captured and stored.`;
+    setEnrollStep(3);
+    enrollSession = null;
+    loadDashboard();
+  } catch(e) { showAlert('enroll-alert-2','error','Enrollment failed.'); }
+}
+
+function resetEnrollment() {
+  stopEnrollCamera();
+  enrollSession = null;
+  ['e-student-id','e-name','e-roll','e-class','e-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  updateEnrollProgress(0,10);
+  document.getElementById('e-complete-btn').disabled = true;
+  document.getElementById('e-last-capture').style.display = 'none';
+  document.getElementById('e-auto-btn').textContent = '▶ Auto Capture';
+  setEnrollStep(1);
+}
+
+// ── Detection ─────────────────────────────────────────────────
+async function toggleDetectCamera() {
+  if (detectStream) { stopDetectCamera(); return; }
+  try {
+    detectStream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    const video = document.getElementById('d-video');
+    video.srcObject = detectStream;
+    video.style.display = 'block';
+    document.getElementById('d-camera-box').querySelector('.camera-placeholder').style.display = 'none';
+    document.getElementById('d-overlay').style.display = 'block';
+    document.getElementById('d-cam-btn').textContent = 'Stop Camera';
+    document.getElementById('d-detect-btn').disabled = false;
+    document.getElementById('d-auto-btn').disabled = false;
+  } catch(e) {
+    showAlert('detect-alert','error','Camera access denied.');
+  }
+}
+
+function stopDetectCamera() {
+  if (autoDetectInterval) { clearInterval(autoDetectInterval); autoDetectInterval = null; }
+  if (detectStream) { detectStream.getTracks().forEach(t=>t.stop()); detectStream = null; }
+  document.getElementById('d-video').style.display = 'none';
+  document.getElementById('d-camera-box').querySelector('.camera-placeholder').style.display = 'flex';
+  document.getElementById('d-overlay').style.display = 'none';
+  document.getElementById('d-annotated').style.display = 'none';
+  document.getElementById('d-cam-btn').textContent = 'Start Camera';
+  document.getElementById('d-detect-btn').disabled = true;
+  document.getElementById('d-auto-btn').disabled = true;
+  document.getElementById('d-auto-btn').textContent = '▶ Live Detect';
+}
+
+async function detectFace() {
+  if (!detectStream) return;
+  const imageData = captureFrame(document.getElementById('d-video'));
+  try {
+    const r = await fetch(API + '/detect', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({image: imageData})
+    });
+    const d = await r.json();
+    if (!r.ok) { showAlert('detect-alert','error', d.error); return; }
+
+    if (d.annotated_image) {
+      document.getElementById('d-annotated').src = d.annotated_image;
+      document.getElementById('d-annotated').style.display = 'block';
+      document.getElementById('d-video').style.display = 'none';
+    }
+
+    displayDetections(d.detections || []);
+  } catch(e) { showAlert('detect-alert','error','Detection request failed. Is backend running?'); }
+}
+
+function displayDetections(detections) {
+  lastDetections = detections;
+  const list = document.getElementById('detect-result-list');
+  const empty = document.getElementById('detect-results-empty');
+  const markSection = document.getElementById('mark-attendance-section');
+
+  if (!detections || detections.length === 0) {
+    list.style.display = 'none'; empty.style.display = 'flex'; markSection.style.display = 'none'; return;
+  }
+  empty.style.display = 'none';
+  list.style.display = 'flex';
+  markSection.style.display = 'block';
+  list.innerHTML = detections.map(d => {
+    const confClass = d.confidence > 70 ? 'conf-high' : d.confidence > 50 ? 'conf-med' : 'conf-low';
+    const confIcon = d.confidence > 70 ? '✅' : d.confidence > 50 ? '⚠️' : '❌';
+    return `<div class="detect-item">
+      <div>
+        <div class="detect-item-name">${d.name}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">Face detected</div>
+      </div>
+      <div style="text-align:right">
+        <div class="detect-item-conf ${confClass}">${confIcon} ${d.confidence.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">confidence</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAutoDetect() {
+  if (autoDetectInterval) {
+    clearInterval(autoDetectInterval); autoDetectInterval = null;
+    document.getElementById('d-auto-btn').textContent = '▶ Live Detect';
+    // restore live video
+    document.getElementById('d-video').style.display = 'block';
+    document.getElementById('d-annotated').style.display = 'none';
+    return;
+  }
+  document.getElementById('d-auto-btn').textContent = '⏸ Stop Live';
+  autoDetectInterval = setInterval(detectFace, 2000);
+  detectFace();
+}
+
+function clearDetections() {
+  lastDetections = [];
+  document.getElementById('detect-result-list').style.display = 'none';
+  document.getElementById('detect-results-empty').style.display = 'flex';
+  document.getElementById('mark-attendance-section').style.display = 'none';
+  document.getElementById('d-annotated').style.display = 'none';
+  if (detectStream) document.getElementById('d-video').style.display = 'block';
+}
+
+async function markAttendance() {
+  if (!lastDetections.length) return;
+  try {
+    const r = await fetch(API + '/attendance/mark', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({detections: lastDetections})
+    });
+    const d = await r.json();
+    if (!r.ok) { showAlert('mark-alert','error',d.error); return; }
+    let msg = '';
+    if (d.marked.length) msg += `✅ Marked: ${d.marked.map(m=>m.name).join(', ')}. `;
+    if (d.already_marked.length) msg += `ℹ Already marked: ${d.already_marked.join(', ')}.`;
+    showAlert('mark-alert', d.marked.length ? 'success' : 'info', msg || 'No new attendance marked.');
+    loadDashboard();
+  } catch(e) { showAlert('mark-alert','error','Failed to mark attendance.'); }
+}
+
+// ── Students ──────────────────────────────────────────────────
+async function loadStudents() {
+  try {
+    const r = await fetch(API + '/students');
+    const d = await r.json();
+    allStudents = d.students || [];
+    renderStudents(allStudents);
+    document.getElementById('student-count-badge').textContent = allStudents.length;
+  } catch(e) {
+    document.getElementById('students-grid').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load students</p></div>';
+  }
+}
+
+function renderStudents(students) {
+  const grid = document.getElementById('students-grid');
+  if (!students.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎓</div><p>No students enrolled yet. <button class="btn btn-primary btn-sm" onclick="navigate(\'enroll\')">Enroll First Student</button></p></div>';
+    return;
+  }
+  grid.innerHTML = students.map(s => {
+    const initials = s.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const photoUrl = s.photo_path ? `${API}/student_photo/${s.photo_path}` : '';
+    return `<div class="student-card">
+      <div class="student-avatar">
+        ${photoUrl ? `<img src="${photoUrl}" alt="${s.name}" onerror="this.parentElement.textContent='${initials}'" />` : initials}
+      </div>
+      <div class="student-name">${s.name}</div>
+      <div class="student-meta">${s.student_id}</div>
+      <div class="student-tags">
+        ${s.class_name ? `<span class="pill pill-blue">${s.class_name}</span>` : ''}
+        ${s.roll_number ? `<span class="pill pill-blue">${s.roll_number}</span>` : ''}
+        <span class="pill pill-green">${s.face_samples} samples</span>
+      </div>
+      <div class="student-actions">
+        <button class="btn btn-red btn-sm" onclick="deleteStudent('${s.student_id}','${s.name}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterStudents() {
+  const q = document.getElementById('search-students').value.toLowerCase();
+  renderStudents(allStudents.filter(s =>
+    s.name.toLowerCase().includes(q) || s.student_id.toLowerCase().includes(q) ||
+    (s.class_name||'').toLowerCase().includes(q) || (s.roll_number||'').toLowerCase().includes(q)
+  ));
+}
+
+async function deleteStudent(id, name) {
+  if (!confirm(`Delete student "${name}"? This will remove their face data permanently.`)) return;
+  try {
+    const r = await fetch(API + '/students/' + id, {method:'DELETE'});
+    const d = await r.json();
+    if (r.ok) { loadStudents(); loadDashboard(); }
+    else alert(d.error);
+  } catch(e) { alert('Delete failed.'); }
+}
+
+// ── Attendance ────────────────────────────────────────────────
+function setTodayDate() {
+  const d = new Date().toISOString().split('T')[0];
+  document.getElementById('att-date').value = d;
+}
+
+async function loadAttendance() {
+  const date = document.getElementById('att-date').value;
+  document.getElementById('att-date-label').textContent = date;
+  document.getElementById('attendance-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr>';
+  try {
+    const r = await fetch(API + '/attendance?date=' + date);
+    const d = await r.json();
+    document.getElementById('att-present').textContent = d.present;
+    document.getElementById('att-absent').textContent = d.absent;
+    document.getElementById('att-total').textContent = d.total;
+
+    const tbody = document.getElementById('attendance-table');
+    if (d.records && d.records.length) {
+      tbody.innerHTML = d.records.map((r,i) => `
+        <tr>
+          <td style="color:var(--text3);font-family:'Space Mono',monospace;font-size:11px">${i+1}</td>
+          <td style="font-weight:600;color:var(--text)">${r.student_name}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:12px;color:var(--text3)">${r.student_id}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:12px">${r.time}</td>
+          <td><span style="font-family:'Space Mono',monospace;font-size:12px;color:${r.confidence>70?'var(--green)':r.confidence>50?'var(--orange)':'var(--red)'}">${r.confidence?r.confidence.toFixed(1)+'%':'—'}</span></td>
+          <td><span class="pill pill-green">Present</span></td>
+        </tr>`).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><span class="icon">📭</span><p>No attendance records for this date</p></div></td></tr>';
+    }
+  } catch(e) {
+    document.getElementById('attendance-table').innerHTML = '<tr><td colspan="6"><div class="empty-state"><span class="icon">⚠️</span><p>Failed to load records</p></div></td></tr>';
+  }
+}
+
+function downloadAttendance() {
+  const date = document.getElementById('att-date').value;
+  window.open(API + '/attendance/download?date=' + date, '_blank');
+}
+
+// ── Refresh All ───────────────────────────────────────────────
+function refreshAll() {
+  checkAPI();
+  if (currentPage === 'dashboard') loadDashboard();
+  else if (currentPage === 'students') loadStudents();
+  else if (currentPage === 'attendance') loadAttendance();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+*.db
+Data/names.pkl
+Data/faces_data.pkl
+student_photos/
+Attendance_Records/
