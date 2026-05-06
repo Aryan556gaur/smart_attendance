@@ -13,10 +13,10 @@ from datetime import datetime
 import cv2
 from flask import Blueprint, jsonify, request
 
-from config import PHOTOS_DIR, ENROLL_MIN_SAMPLES
-from core.database import get_conn
-from core.face_store import save_face_data
-from core.face_utils import decode_base64_image, encode_image_base64, detect_faces, extract_face_encoding
+from backend.config import PHOTOS_DIR, ENROLL_MIN_SAMPLES
+from backend.core.database import get_conn
+from backend.core.face_store import save_face_data
+from backend.core.face_utils import decode_base64_image, encode_image_base64, detect_faces, extract_face_encoding
 
 enrollment_bp = Blueprint('enrollment', __name__)
 

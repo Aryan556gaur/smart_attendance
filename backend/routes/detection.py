@@ -13,10 +13,10 @@ from datetime import datetime
 import cv2
 from flask import Blueprint, jsonify, request
 
-from config import ATTENDANCE_DIR, DETECT_MIN_CONF
-from core.database import get_conn
-from core.face_store import get_knn_model
-from core.face_utils import decode_base64_image, encode_image_base64, detect_faces, extract_face_encoding
+from backend.config import ATTENDANCE_DIR, DETECT_MIN_CONF
+from backend.core.database import get_conn
+from backend.core.face_store import get_knn_model
+from backend.core.face_utils import decode_base64_image, encode_image_base64, detect_faces, extract_face_encoding
 
 detection_bp = Blueprint('detection', __name__)
 

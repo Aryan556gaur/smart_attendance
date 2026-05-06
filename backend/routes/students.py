@@ -12,9 +12,9 @@ import os
 
 from flask import Blueprint, jsonify, request, send_file
 
-from config import PHOTOS_DIR
-from core.database import get_conn
-from core.face_store import delete_face_data_for
+from backend.config import PHOTOS_DIR
+from backend.core.database import get_conn
+from backend.core.face_store import delete_face_data_for
 
 students_bp = Blueprint('students', __name__)
 

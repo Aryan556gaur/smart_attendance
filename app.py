@@ -12,14 +12,14 @@ import sys
 from flask import Flask, send_file
 from flask_cors import CORS
 
-from config import FRONTEND_INDEX
-from core.database import init_db
-from core.face_utils import get_face_detector   # warm up cascade on startup
+from backend.config import FRONTEND_INDEX
+from backend.core.database import init_db
+from backend.core.face_utils import get_face_detector   # warm up cascade on startup
 
-from routes.students   import students_bp
-from routes.enrollment import enrollment_bp
-from routes.detection  import detection_bp
-from routes.attendance import attendance_bp
+from backend.routes.students   import students_bp
+from backend.routes.enrollment import enrollment_bp
+from backend.routes.detection  import detection_bp
+from backend.routes.attendance import attendance_bp
 
 
 def create_app() -> Flask:

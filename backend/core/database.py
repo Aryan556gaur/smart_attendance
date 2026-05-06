@@ -4,7 +4,7 @@ SQLite connection helper and schema initialisation.
 """
 
 import sqlite3
-from config import DB_PATH
+from backend.config import DB_PATH
 
 
 def get_conn() -> sqlite3.Connection:

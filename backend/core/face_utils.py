@@ -15,7 +15,7 @@ import urllib.request
 import cv2
 import numpy as np
 
-from config import CASCADE_PATH, FACE_SIZE, MIN_FACE_PX, SCALE_FACTOR, MIN_NEIGHBORS
+from backend.config import CASCADE_PATH, FACE_SIZE, MIN_FACE_PX, SCALE_FACTOR, MIN_NEIGHBORS
 
 # ── Haar cascade ───────────────────────────────────────────────────────────────
 _CASCADE_URL = (

@@ -10,7 +10,7 @@ import pickle
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
-from config import NAMES_PKL, FACES_PKL, KNN_MAX_K
+from backend.config import NAMES_PKL, FACES_PKL, KNN_MAX_K
 
 
 # ── Low-level pickle I/O ───────────────────────────────────────────────────────

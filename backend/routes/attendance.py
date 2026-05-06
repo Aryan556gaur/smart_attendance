@@ -14,8 +14,8 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, request, send_file
 
-from config import ATTENDANCE_DIR
-from core.database import get_conn
+from backend.config import ATTENDANCE_DIR
+from backend.core.database import get_conn
 
 attendance_bp = Blueprint('attendance', __name__)
 
