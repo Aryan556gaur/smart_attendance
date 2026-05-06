@@ -49,4 +49,5 @@ def create_app() -> Flask:
 if __name__ == '__main__':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     print('Smart Attendance System — http://localhost:5000')
-    create_app().run(debug=True, port=5000, threaded=True)
+    create_app()
+    app.run(debug=True, port=5000, threaded=True)
