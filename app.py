@@ -21,10 +21,12 @@ from backend.routes.enrollment import enrollment_bp
 from backend.routes.detection  import detection_bp
 from backend.routes.attendance import attendance_bp
 
+app = Flask(__name__)
+
 
 def create_app() -> Flask:
     """Initialise and return the configured Flask application."""
-    app = Flask(__name__)
+    # app = Flask(__name__)
     CORS(app)
 
     # ── Bootstrap ──────────────────────────────────────────────────────────────
