@@ -7,17 +7,28 @@ A production-grade upgrade of the [Smart_Attendence_System](https://github.com/A
 ## 🏗️ Architecture
 
 ```
-smart_attendance/
-├── backend/
-│   ├── app.py              ← Flask REST API (enrollment + detection)
-│   └── requirements.txt
-├── frontend/
-│   └── index.html          ← Single-page web dashboard
-├── Data/                   ← Face data (PKL files) + DB + Haar cascade
-├── student_photos/         ← Student profile photos
-├── Attendance_Records/     ← CSV attendance files per date
-├── start.sh               ← Quick startup script
-└── README.md
+.
+├── Data
+│   └── haarcascade_frontalface_default.xml
+├── backend
+│   ├── core
+│   │   ├── database.py
+│   │   ├── face_store.py
+│   │   └── face_utils.py
+│   ├── routes
+│   │   ├── attendance.py
+│   │   ├── detection.py
+│   │   ├── enrollment.py
+│   │   └── students.py
+│   └── config.py
+├── frontend
+│   └── index.html
+├── .gitignore
+├── Dockerfile
+├── README.md
+├── app.py
+├── requirements.txt
+└── vercel.json
 ```
 
 ---
